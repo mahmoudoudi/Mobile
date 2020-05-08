@@ -41,6 +41,7 @@ public class Login extends Form {
 
         TextField username = new TextField(null, "username");
         TextField password = new TextField(null, "password");
+        password.setConstraint(TextField.PASSWORD);
 
         Button login = new Button("login");
 
@@ -63,7 +64,7 @@ public class Login extends Form {
                         password.setText("");
                         Session.start(User);
                         
-                        if (User.getRoles().equals("student")) {
+                        if (User.getRoles().equals("GUIDE")) {
                             new Guide(current,theme).show();
                         } else {
                           new Client(current,theme).show();

@@ -11,16 +11,12 @@ import com.codename1.io.ConnectionRequest;
 import com.codename1.io.JSONParser;
 import com.codename1.io.NetworkEvent;
 import com.codename1.io.NetworkManager;
-import com.codename1.l10n.DateFormat;
-import com.codename1.l10n.ParseException;
-import com.codename1.l10n.SimpleDateFormat;
 import com.codename1.ui.events.ActionListener;
 import edu.hooks.entities.Event;
+import edu.hooks.entities.user;
 import edu.hooks.utils.Statics;
 import java.io.IOException;
-//import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -121,8 +117,28 @@ public class ServicesEvent {
                 return events;
     }
     
-    public boolean AddEvent(Event c) {
-        String url = Statics.BASE_URL + "AddEventMobile/?nomevent=" + c.getNameEvent()+ "&addressevent=" + c.getAddressEvent()+ "&type=" + c.getType()+ "&priceevent=" + c.getPriceEvent() + "&nbrplace=" + c.getNbrPlace()+ "&descriptionevent=" + c.getDescriptionEvent()+ "&image=" + c.getImage(); //création de l'URL
+    public boolean AddEvent(Event c, user u) {
+        String url = Statics.BASE_URL + "AddEventMobile/?nomevent=" + c.getNameEvent()+ "&addressevent=" + c.getAddressEvent()+ "&type=" + c.getType()+ "&priceevent=" + c.getPriceEvent() + "&nbrplace=" + c.getNbrPlace()+ "&descriptionevent=" + c.getDescriptionEvent()+ "&image=" + c.getImage()+"&iduser="+u.getId(); //création de l'URL
+        req.setUrl(url);// Insertion de l'URL de notre demande de connexion
+        System.out.println(url);
+        req.addResponseListener(new ActionListener<NetworkEvent>() {
+            @Override
+            public void actionPerformed(NetworkEvent evt) {
+                resultOK = req.getResponseCode() == 200; //Code HTTP 200 OK
+                req.removeResponseListener(this); //Supprimer cet actionListener
+                /* une fois que nous avons terminé de l'utiliser.
+                La ConnectionRequest req est unique pour tous les appels de 
+                n'importe quelle méthode du Service task, donc si on ne supprime
+                pas l'ActionListener il sera enregistré et donc éxécuté même si 
+                la réponse reçue correspond à une autre URL(get par exemple)*/
+
+            }
+        });
+        NetworkManager.getInstance().addToQueueAndWait(req);
+        return resultOK;
+    }
+    public boolean ParticipateEvent(Event c,user u) {
+        String url = Statics.BASE_URL + "ParticipateEventMobile/?id="+ c.getIdEvent()+ "&iduser="+ u.getId(); //création de l'URL
         req.setUrl(url);// Insertion de l'URL de notre demande de connexion
         req.addResponseListener(new ActionListener<NetworkEvent>() {
             @Override
@@ -132,6 +148,25 @@ public class ServicesEvent {
                 /* une fois que nous avons terminé de l'utiliser.
                 La ConnectionRequest req est unique pour tous les appels de 
                 n'importe quelle méthode du Service task, donc si on ne supprime
+                pas l'ActionListener il sera enregistré et donc éxécuté même si 
+                la réponse reçue correspond à une autre URL(get par exemple)*/
+
+            }
+        });
+        NetworkManager.getInstance().addToQueueAndWait(req);
+        return resultOK;
+    }
+    public boolean CancelEvent(Event c,user u) {
+        String url = Statics.BASE_URL + "QuitEventMobile/?id=" + c.getIdEvent()+ "&iduser="+ u.getId();//création de l'URL
+        req.setUrl(url);// Insertion de l'URL de notre demande de connexion
+        req.addResponseListener(new ActionListener<NetworkEvent>() {
+            @Override
+            public void actionPerformed(NetworkEvent evt) {
+                resultOK = req.getResponseCode() == 200; //Code HTTP 200 OK
+                req.removeResponseListener(this); //Supprimer cet actionListener
+                /* une fois que nous avons terminé de l'utiliser.
+                La ConnectionRequest req est unique pour tous les appels de 
+                n'importe quelle méthode du Service Event, donc si on ne supprime
                 pas l'ActionListener il sera enregistré et donc éxécuté même si 
                 la réponse reçue correspond à une autre URL(get par exemple)*/
 
@@ -179,6 +214,32 @@ public class ServicesEvent {
             public void actionPerformed(NetworkEvent evt) {
                 resultOK = req.getResponseCode() == 200; 
                 req.removeResponseListener(this);
+            }
+        });
+        NetworkManager.getInstance().addToQueueAndWait(req);
+        return resultOK;
+    }
+    
+     public boolean isParticpated(Event c,user u) {
+        String url = Statics.BASE_URL + "isParticpated/?id=" + c.getIdEvent()+ "&iduser="+ u.getId(); //création de l'URL
+        req.setUrl(url);// Insertion de l'URL de notre demande de connexion
+        req.addResponseListener(new ActionListener<NetworkEvent>() {
+            @Override
+            public void actionPerformed(NetworkEvent evt) {
+
+                String data = new String(req.getResponseData());
+                JSONParser j = new JSONParser();
+                Map<String, Object> tasksListJson;
+                try {
+                    tasksListJson = j.parseJSON(new CharArrayReader(data.toCharArray()));
+                    result = (String) tasksListJson.get("boolean");
+                } catch (IOException ex) {
+                    ex.getMessage();
+                }
+
+                resultOK = result.equals("true");
+                req.removeResponseListener(this);
+
             }
         });
         NetworkManager.getInstance().addToQueueAndWait(req);

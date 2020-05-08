@@ -7,6 +7,7 @@ package edu.hooks.gui;
 
 import com.codename1.components.ImageViewer;
 import com.codename1.components.SpanLabel;
+import com.codename1.components.ToastBar;
 import com.codename1.io.ConnectionRequest;
 import com.codename1.messaging.Message;
 import com.codename1.ui.Button;
@@ -14,19 +15,25 @@ import com.codename1.ui.Command;
 import com.codename1.ui.Component;
 import com.codename1.ui.Container;
 import com.codename1.ui.Dialog;
+import com.codename1.ui.Display;
 import com.codename1.ui.EncodedImage;
 import com.codename1.ui.FontImage;
 import com.codename1.ui.Form;
+import com.codename1.ui.Image;
 import com.codename1.ui.Label;
 import com.codename1.ui.TextField;
 import com.codename1.ui.URLImage;
+import com.codename1.ui.events.ActionEvent;
+import com.codename1.ui.events.ActionListener;
 import com.codename1.ui.layouts.BoxLayout;
 import com.codename1.ui.layouts.FlowLayout;
+import com.codename1.ui.plaf.UIManager;
 import com.codename1.ui.util.Resources;
 import edu.hooks.entities.Event;
 import edu.hooks.entities.Session;
 import edu.hooks.entities.user;
 import edu.hooks.services.ServicesEvent;
+import edu.hooks.services.UploadServices;
 import edu.hooks.statistique.EventPieChart;
 
 /**
@@ -34,11 +41,12 @@ import edu.hooks.statistique.EventPieChart;
  * @author Ayadi
  */
 public class Interfaceevent extends Form {
-    static Form  currentForm;
-    
-    
+
+    static Form currentForm;
+    UploadServices uploadservices = new UploadServices();
     private EncodedImage placeHolder;
     user User = Session.getCurrentSession();
+    String FilenameInserver = "";
 
     public Interfaceevent(Form previous, Resources theme) {
 
@@ -49,15 +57,15 @@ public class Interfaceevent extends Form {
         for (Event c : ServicesEvent.getInstance().getAllEvents()) {
             Container InfoContainer = new Container(BoxLayout.y());
             Label nomEvent = new Label(c.getNameEvent());
-            Label AddEvent = new Label (c.getAddressEvent());
-            Label typee = new Label (c.getType());
+            Label AddEvent = new Label(c.getAddressEvent());
+            Label typee = new Label(c.getType());
             Label prix = new Label(String.valueOf(c.getPriceEvent()));
             Label Nombreplace = new Label(String.valueOf(c.getNbrPlace()));
-            Label description = new Label (c.getDescriptionEvent());
+            Label description = new Label(c.getDescriptionEvent());
             //Label email = new Label(c.getEmail());
             //Label tel = new Label(String.valueOf(c.getTel()));
             //Label Date = new Label(c.getDate());
-            
+
             InfoContainer.add(nomEvent);
             InfoContainer.add(AddEvent);
             InfoContainer.add(typee);
@@ -83,12 +91,11 @@ public class Interfaceevent extends Form {
         }
 
         currentForm.getToolbar().addCommandToOverflowMenu("Add Event", null, ev -> {
-           AddEvent(theme).show();
+            AddEvent(theme).show();
         });
-        
-        currentForm.getToolbar().addCommandToOverflowMenu("Stat Events", null, ev -> {
-                                StatEvent(theme).show();
 
+        currentForm.getToolbar().addCommandToOverflowMenu("Stat Events", null, ev -> {
+            StatEvent(theme).show();
 
         });
 
@@ -97,15 +104,8 @@ public class Interfaceevent extends Form {
         });
 
     }
-    
 
-    
-    
-    
-    
-    
-  
-  public Form AddEvent(Resources theme) {
+    public Form AddEvent(Resources theme) {
 
         Form AddEvent = new Form("ADD", BoxLayout.y());
 
@@ -117,20 +117,41 @@ public class Interfaceevent extends Form {
         Label description = new Label("description");
         Label image = new Label("image");
 
-        
         TextField nomeve = new TextField(null, "nomeve");
         TextField addresseve = new TextField(null, "addresseve");
         TextField typeeve = new TextField(null, "typeeve");
         TextField prixeve = new TextField(null, "prixeve");
         TextField nombreplaceeve = new TextField(null, "nombreplaceeve");
         TextField descriptioneve = new TextField(null, "descriptioneve");
-        TextField imageeve = new TextField(null, "imageeve");
+        Button imageeve = new Button("Browse");
 
-        
         Button Save = new Button("Save");
 
-        AddEvent.addAll(nom, nomeve, address, addresseve, type, typeeve, prix, prixeve, nombreplace, nombreplaceeve,description,descriptioneve,image,imageeve,Save);
+        AddEvent.addAll(nom, nomeve, address, addresseve, type, typeeve, prix, prixeve, nombreplace, nombreplaceeve, description, descriptioneve, image, imageeve, Save);
+// upload image in server 
+        imageeve.addActionListener(e -> {
+            Display.getInstance().openGallery(new ActionListener() {
 
+                public void actionPerformed(final ActionEvent evt) {
+                    if (evt == null) {
+                        ToastBar.Status s = ToastBar.getInstance().createStatus();
+                        s.setMessage("User Cancelled Gallery");
+                        s.setMessageUIID("Title");
+                        Image i = FontImage.createMaterial(FontImage.MATERIAL_ERROR, UIManager.getInstance().getComponentStyle("Title"));
+                        s.setIcon(i);
+                        s.setExpires(2000);
+                        s.show();
+                        return;
+                    }
+                    String file = (String) evt.getSource();
+                    System.out.println("pathhhh:" + file);
+                    String path = file.substring(7);
+                    System.out.println(path);
+                    FilenameInserver = uploadservices.uploadImage(path);
+                }
+            }, Display.GALLERY_IMAGE);
+
+        });
         Save.addActionListener(ev -> {
             if ((nomeve.getText().length() == 0) || (addresseve.getText().length() == 0) || typeeve.getText().length() == 0
                     || prixeve.getText().length() == 0 || nombreplaceeve.getText().length() == 0 || (descriptioneve.getText().length() == 0) || (imageeve.getText().length() == 0)) {
@@ -141,17 +162,15 @@ public class Interfaceevent extends Form {
                     c.setNameEvent(nomeve.getText());
                     c.setAddressEvent(addresseve.getText());
                     c.setType(typeeve.getText());
-                    
+
                     float price = Float.parseFloat(prixeve.getText());
                     c.setPriceEvent(price);
                     int nombre = Integer.parseInt(nombreplaceeve.getText());
-                     c.setNbrPlace(nombre);
-                       c.setDescriptionEvent(descriptioneve.getText());
-                       c.setImage(imageeve.getText());
-                       
-                   
+                    c.setNbrPlace(nombre);
+                    c.setDescriptionEvent(descriptioneve.getText());
+                    c.setImage(FilenameInserver);
 
-                    if (ServicesEvent.getInstance().AddEvent(c)) {
+                    if (ServicesEvent.getInstance().AddEvent(c, User)) {
                         Dialog.show("Success", "Event Added", new Command("OK"));
                         new Interfaceevent(Interfaceevent.currentForm, theme).show();
                     } else {
@@ -171,8 +190,8 @@ public class Interfaceevent extends Form {
 
         return AddEvent;
     }
-  
-  public Form EventDetail(Event c, Resources theme) {
+
+    public Form EventDetail(Event c, Resources theme) {
 
         Form EventDetail = new Form(c.getNameEvent(), BoxLayout.y());
 
@@ -193,7 +212,6 @@ public class Interfaceevent extends Form {
         //Label image = new Label("image");
 
         //SpanLabel Message = new SpanLabel("Descrption: \n" + c.getDescription() + "\n" + "Created AT: " + c.getDate() + "\n" + "Members: " + c.getNombreplace());
-
         TextField EventNameField = new TextField(null, "Name");
 
         EventNameField.setText(c.getNameEvent());
@@ -208,11 +226,11 @@ public class Interfaceevent extends Form {
         prixeve.setText(String.valueOf(c.getPriceEvent()));
         TextField nombreplaceeve = new TextField(null, "places");
         nombreplaceeve.setText(String.valueOf(c.getNbrPlace()));
-         TextField descriptioneve = new TextField(null, "description");
+        TextField descriptioneve = new TextField(null, "description");
         descriptioneve.setText(c.getDescriptionEvent());
 
         Container Container = new Container(new FlowLayout());
-        Container.addAll(nom, nomeve, address, addresseve, type, typeeve,prix ,prixeve,nombreplace,nombreplaceeve,description,descriptioneve);
+        Container.addAll(nom, nomeve, address, addresseve, type, typeeve, prix, prixeve, nombreplace, nombreplaceeve, description, descriptioneve);
         EventDetail.add(img);
         EventDetail.add(Container);
 
@@ -236,14 +254,14 @@ public class Interfaceevent extends Form {
         });
 
         Edit.addActionListener(ev -> {
-            c.setNameEvent(EventNameField.getText());
+            c.setNameEvent(nomeve.getText());
             c.setAddressEvent(addresseve.getText());
-            
+
             c.setType(typeeve.getText());
             c.setPriceEvent(Float.parseFloat(prixeve.getText()));
             c.setNbrPlace(Integer.parseInt(nombreplaceeve.getText()));
             c.setDescriptionEvent(descriptioneve.getText());
-            
+
             if (ServicesEvent.getInstance().EditEvent(c)) {
                 Dialog.show("Success", "Club Edited", new Command("OK"));
                 new Interfaceevent(Interfaceevent.currentForm, theme).show();
@@ -258,26 +276,18 @@ public class Interfaceevent extends Form {
 
         return EventDetail;
     }
-  
-  public Form StatEvent(Resources theme) {
 
-               EventPieChart a = new EventPieChart();
-                        Form stats_Form =a.execute();
-                        SpanLabel test_SpanLabel = new SpanLabel("Hiiii");
-                        Class cls = EventPieChart.class;
+    public Form StatEvent(Resources theme) {
+
+        EventPieChart a = new EventPieChart();
+        Form stats_Form = a.execute();
+        SpanLabel test_SpanLabel = new SpanLabel("Hiiii");
+        Class cls = EventPieChart.class;
         stats_Form.getToolbar().addMaterialCommandToLeftBar("back", FontImage.MATERIAL_ARROW_BACK, ev -> {
             new Interfaceevent(Guide.current, theme).show();
         });
 
         return stats_Form;
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
 }

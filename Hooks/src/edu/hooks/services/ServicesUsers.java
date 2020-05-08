@@ -58,11 +58,12 @@ public class ServicesUsers {
                 
                 
                 UserL.setEmail(UserListJson.get("email").toString());
+                UserL.setUsername(UserListJson.get("username").toString());
 
-                if (!UserListJson.get("role").toString().equals("[ROLE_STUDENT]")) {
-                    UserL.setRoles("student");
+                if (UserListJson.get("role").toString().contains("ROLE_CLIENT")) {
+                    UserL.setRoles("CLIENT");
                 } else {
-                    UserL.setRoles("teacher");
+                    UserL.setRoles("GUIDE");
                 }
 
             } else {

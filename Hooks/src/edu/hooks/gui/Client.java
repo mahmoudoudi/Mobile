@@ -11,6 +11,7 @@ import com.codename1.ui.layouts.BoxLayout;
 import com.codename1.ui.util.Resources;
 import edu.hooks.entities.Session;
 import edu.hooks.entities.user;
+import static edu.hooks.gui.Guide.current;
 
 /**
  *
@@ -18,9 +19,12 @@ import edu.hooks.entities.user;
  */
 //hedhy teacher
 public class Client extends Form {
+        static Form current;
+
     user User=Session.getCurrentSession();
 
     public Client(Form previous,Resources theme) {
+        current = this; //Récupérsation de l'interface(Form) en cours
 
         setTitle("Client");
 
@@ -31,6 +35,10 @@ public class Client extends Form {
         }
         );
         getToolbar().addCommandToSideMenu("About", null, ev -> {
+
+        });
+          getToolbar().addCommandToSideMenu("Events", null, ev -> {
+            new InterfaceEventClient(current, theme).showBack();
 
         });
 
