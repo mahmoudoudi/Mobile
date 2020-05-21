@@ -47,7 +47,7 @@ public class ServicesUsers {
    
         user UserL = new user();
         try {
-            JSONParser j = new JSONParser();
+            JSONParser j = new JSONParser();//instanciation du parsing json
 
             Map<String, Object> UserListJson = j.parseJSON(new CharArrayReader(jsonText.toCharArray()));
 
